@@ -1,0 +1,179 @@
+<%- include('partials/header') %>
+
+<div class="container mx-auto px-4 py-6">
+    <!-- Table for displaying records -->
+    <div class="flex justify-center items-center">
+        <form action="/" method="get" class="form-search">
+            <div class="input-search-wrapper field">
+                <input type="number" class="input-search" placeholder="Search by ID" name="searchId" id='searchId'
+                       value="<%= searchId || '' %>" />
+                <label for="searchId" class="input-label">ID</label>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-search">
+                Search
+            </button>
+            <button type="button"
+                    class="btn btn-search"
+                    onclick="window.location.href = '/'">
+                Reload
+            </button>
+            <button type='button' id="myBtn" class="btn ">Search by Row and Event Name</button>
+
+        </form>
+
+
+    </div>
+    <div id="myModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content ">
+            <span class="close">&times;</span>
+            <form id="searchForm" action="/" method="get">
+                <div class="input-search-wrapper field">
+                    <input type="text" class="input-search" placeholder="Enter Event Name" name="event_name"
+                           id='event_name' />
+                    <label for="event_name" class="input-label">Event name</label>
+                </div>
+                <div class="input-search-wrapper field">
+                    <input type="text" class="input-search" placeholder="Enter Row" name="row" id='row' />
+                    <label for="row" class="input-label">Row</label>
+                </div>
+                <button type="submit" class='btn'>Search</button>
+            </form>
+        </div>
+    </div>
+    <div class="bg-white shadow-md rounded my-6">
+        <table class="min-w-full table-auto">
+            <thead>
+            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                <th class="py-3 px-6 text-left">#</th>
+                <th class="py-3 px-6 text-left">ID</th>
+                <th class="py-3 px-6 text-left">Event Name</th>
+                <th class="py-3 px-6 text-center">Event Date</th>
+                <th class="py-3 px-6 text-center">Venue</th>
+                <th class="py-3 px-6 text-center">Section</th>
+                <th class="py-3 px-6 text-center">Row</th>
+                <th class="py-3 px-6 text-center">Quantity</th>
+                <th class="py-3 px-6 text-center">Profit</th>
+                <th class="py-3 px-6 text-center">Total</th>
+                <th class="py-3 px-6 text-center">Total Cost</th>
+                <th class="py-3 px-6 text-center">Purchased</th>
+                <th class="py-3 px-6 text-center">Updated By</th>
+                <th class="py-3 px-6 text-center">Actions</th>
+            </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm font-light" id="records-table">
+            <% data.forEach((row, index)=> { %>
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left"><%= index + 1 %></td>
+                    <td class="py-3 px-6 text-left"><%= row.id %></td>
+                    <td class="py-3 px-6 text-left"><%= row.event_name %></td>
+                    <td class="py-3 px-6 text-center"><%= row.event_date %></td>
+                    <td class="py-3 px-6 text-center"><%= row.venue %></td>
+                    <td class="py-3 px-6 text-center"><%= row.section %></td>
+                    <td class="py-3 px-6 text-center"><%= row.row %></td>
+                    <td class="py-3 px-6 text-center"><%= row.quantity %></td>
+                    <td class="py-3 px-6 text-center"><%= row.profit %></td>
+                    <td class="py-3 px-6 text-center"><%= row.total %></td>
+                    <td class="py-3 px-6 text-center"><%= row.total_cost %></td>
+                    <td class="py-3 px-6 text-center"><%= row.purchased ? 'Yes' : 'No' %></td>
+                    <td class="py-3 px-6 text-center"><%= row.updated_by %></td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center">
+                            <% if (!row.purchased) { %>
+                                <button onclick="purchaseItem(<%= row.id %>)" class="btn">
+                                    Purchase
+                                </button>
+                            <% } else { %>
+                                <button onclick="revertPurchase(<%= row.id %>)" class="btn">
+                                    Revert
+                                </button>
+                            <% } %>
+                        </div>
+                    </td>
+                </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-center">
+        <div class="inline-flex" id="pagination-container">
+            <% for(let i = 1; i <= Math.ceil(count / pagesize); i++) { %>
+                <a href="/?page=<%= i %>"
+                   class="<%= page === i ? 'text-blue-500' : 'text-gray-500' %> hover:text-blue-700 px-3 py-1 rounded-md"><%= i %></a>
+            <% } %>
+        </div>
+    </div>
+    <script>
+      function purchaseItem (id) {
+        const data = {
+          id: id,
+          updated_by: 'Test'
+        };
+
+        fetch('/purchase-item', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+          .then(() => {
+            window.location.reload();
+          })
+          .catch(error => {
+            console.error('Error purchasing item:', error);
+          });
+      }
+
+      function revertPurchase (id) {
+        const data = { id: id };
+
+        fetch('/revert-purchase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Success:', data);
+            window.location.reload();
+          })
+          .catch(error => {
+            console.error('Error reverting purchase:', error);
+          });
+      }
+
+      let modal = document.getElementById('myModal');
+
+      // Get the button that opens the modal
+      let btn = document.getElementById('myBtn');
+
+      // Get the <span> element that closes the modal
+      let span = document.getElementsByClassName('close')[0];
+
+      // When the user clicks on the button, open the modal
+      btn.onclick = function() {
+        modal.style.display = 'block';
+      };
+
+      // When the user clicks on <span> (x), close the modal
+      span.onclick = function() {
+        modal.style.display = 'none';
+      };
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    </script>
+</div>
+
+<%- include('partials/footer') %>
